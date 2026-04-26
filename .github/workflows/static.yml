@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Викторина — 3 вопроса</title>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary: #4f6ef7;
+            --primary-hover: #3b54e0;
+            --text: #2d3748;
+            --text-light: #5a6577;
+            --border: #e2e8f0;
+            --correct: #48bb78;
+            --wrong: #f56565;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #e8edf5 0%, #dce3ed 30%, #eef1f7 60%, #e3e9f2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -180px;
+            right: -120px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(79, 110, 247, 0.07) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: -100px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(72, 187, 120, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .quiz-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 620px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow), 0 0 0 1px rgba(0, 0, 0, 0.03);
+            padding: 36px 32px 32px;
+            transition: all var(--transition);
+        }
+
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .quiz-header .icon {
+            display: inline-block;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border-radius: 14px;
+            font-size: 28px;
+            line-height: 52px;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .quiz-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
+        .quiz-header .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+
+        .questions-section {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            margin-bottom: 24px;
+        }
+
+        .question-card {
+            background: #fafbfc;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px 18px 18px;
+            transition: all var(--transition);
+            position: relative;
+        }
+
+        .question-card.active-question {
+            border-color: #c3d0ff;
+            background: #fdfdff;
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.04);
+        }
+
+        .question-card.correct-highlight {
+            border-color: var(--correct) !important;
+            background: #f7fdf9 !important;
+            box-shadow: 0 0 0 4px rgba(72, 187, 120, 0.08) !important;
+        }
+
+        .question-card.wrong-highlight {
+            border-color: var(--wrong) !important;
+            background: #fefafa !important;
+            box-shadow: 0 0 0 4px rgba(245, 101, 101, 0.08) !important;
+        }
+
+        .question-number {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--primary);
+            background: #eef2ff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #e8ecf1;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: #fff;
+            font-size: 0.95rem;
+            color: var(--text);
+            user-select: none;
+            position: relative;
+        }
+
+        .option-label:hover {
+            border-color: #c3d0ff;
+            background: #fafbff;
+            box-shadow: 0 2px 8px rgba(79, 110, 247, 0.05);
+        }
+
+        .option-label input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ccd5e0;
+            border-radius: 50%;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            background: #fff;
+        }
+
+        .option-label input[type="radio"]:checked {
+            border-color: var(--primary);
+            background: var(--primary);
+            box-shadow: inset 0 0 0 4px #fff;
+        }
+
+        .option-label:has(input:checked) {
+            border-color: var(--primary);
+            background: #f5f7ff;
+            font-weight: 500;
+        }
+
+        .option-label.correct-answer {
+            border-color: var(--correct) !important;
+            background: #f0faf4 !important;
+            color: #276749 !important;
+            font-weight: 600 !important;
+        }
+
+        .option-label.wrong-answer {
+            border-color: var(--wrong) !important;
+            background: #fef5f5 !important;
+            color: #9b2c2c !important;
+        }
+
+        .option-label.correct-answer input[type="radio"] {
+            border-color: var(--correct) !important;
+            background: var(--correct) !important;
+            box-shadow: inset 0 0 0 4px #fff !important;
+        }
+
+        .option-label.wrong-answer input[type="radio"] {
+            border-color: var(--wrong) !important;
+            background: var(--wrong) !important;
+            box-shadow: inset 0 0 0 4px #fff !important;
+        }
+
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            color: #fff;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(79, 110, 247, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 22px rgba(79, 110, 247, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(79, 110, 247, 0.2);
+        }
+
+        .btn-submit:disabled {
+            background: #b0bec5;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-retry {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            color: var(--primary);
+            background: #eef2ff;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+            margin-top: 8px;
+        }
+
+        .btn-retry:hover {
+            background: #e0e7ff;
+            border-color: #c3d0ff;
+        }
+
+
+        .result-block {
+            display: none;
+            text-align: center;
+            padding: 28px 20px 20px;
+            animation: fadeSlideIn 0.45s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-score {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .result-score.perfect {
+            color: #48bb78;
+        }
+        .result-score.good {
+            color: #4f6ef7;
+        }
+        .result-score.okay {
+            color: #ed8936;
+        }
+        .result-score.poor {
+            color: #f56565;
+        }
+
+        .result-outof {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 14px;
+        }
+
+        .result-message {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .result-emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 8px;
+            animation: bounceEmoji 0.6s ease;
+        }
+
+        @keyframes bounceEmoji {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.15);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .result-detail {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+
+        @media (max-width: 500px) {
+            .quiz-container {
+                padding: 24px 16px 22px;
+                border-radius: 12px;
+            }
+            .quiz-header h1 {
+                font-size: 1.3rem;
+            }
+            .question-card {
+                padding: 14px 12px 14px;
+            }
+            .option-label {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+                gap: 8px;
+            }
+            .result-score {
+                font-size: 2.8rem;
+            }
+            .result-emoji {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container" id="quizContainer">
+        <!-- Заголовок -->
+        <div class="quiz-header">
+            <span class="icon">🍇</span>
+            <h1>Мини-викторина</h1>
+            <p class="subtitle">Ответьте на 3 вопроса получите скидку!</p>
+        </div>
+
+        <!-- Форма с вопросами -->
+        <form id="quizForm" novalidate>
+            <div class="questions-section">
+
+                <!-- Вопрос 1 -->
+                <div class="question-card" data-question="1">
+                    <span class="question-number">Вопрос 1</span>
+                    <p class="question-text">Я делаю десерт нарядным, но сам не имею вкуса. Я могу быть пудрой, гелем или каплей. Кто я?</p>
+                    <div class="options-group">
+                        <label class="option-label">
+                            <input type="radio" name="q1" value="7"> Повар
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q1" value="8"> Краситель
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q1" value="9"> Виноград
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q1" value="10"> Уксус
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Вопрос 2 -->
+                <div class="question-card" data-question="2">
+                    <span class="question-number">Вопрос 2</span>
+                    <p class="question-text">Как правильно хранить сухой пищевой краситель?</p>
+                    <div class="options-group">
+                        <label class="option-label">
+                            <input type="radio" name="q2" value="Золото"> Лучше разбавлять его водой, при необходимости выпаривать
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q2" value="Кислород"> В темном сухом месте
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q2" value="Осмий"> В сухом месте под солнцем
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q2" value="Олово"> Пищевой краситель не хранится больше суток
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Вопрос 3 -->
+                <div class="question-card" data-question="3">
+                    <span class="question-number">Вопрос 3</span>
+                    <p class="question-text">Можно ли смешивать красители между собой?</p>
+                    <div class="options-group">
+                        <label class="option-label">
+                            <input type="radio" name="q3" value="1959"> Нет, нельзя, красители испортятся.
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q3" value="1960"> Да, можно, но цвет может быть непредсказуемым.
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q3" value="1961"> Да, можно. Получатся стандартные сочетания.
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q3" value="1962"> Нет, нельзя, красители будут обесцвечиваться.
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Кнопка отправки -->
+            <button type="submit" class="btn-submit" id="btnSubmit">📝 Проверить ответы</button>
+        </form>
+
+        <!-- Блок с результатом (изначально скрыт) -->
+        <div class="result-block" id="resultBlock">
+            <span class="result-emoji" id="resultEmoji"></span>
+            <div class="result-score" id="resultScore"></div>
+            <div class="result-outof" id="resultOutOf"></div>
+            <p class="result-message" id="resultMessage"></p>
+            <p class="result-detail" id="resultDetail"></p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ──────────────────────────────────────
+            // Элементы DOM
+            // ──────────────────────────────────────
+            const quizForm = document.getElementById('quizForm');
+            const resultBlock = document.getElementById('resultBlock');
+            const btnSubmit = document.getElementById('btnSubmit');
+            const btnRetry = document.getElementById('btnRetry');
+            const resultEmoji = document.getElementById('resultEmoji');
+            const resultScore = document.getElementById('resultScore');
+            const resultOutOf = document.getElementById('resultOutOf');
+            const resultMessage = document.getElementById('resultMessage');
+            const resultDetail = document.getElementById('resultDetail');
+            const questionCards = document.querySelectorAll('.question-card');
+
+            // ──────────────────────────────────────
+            // Правильные ответы
+            // ──────────────────────────────────────
+            const correctAnswers = {
+                q1: '8', // 8 планет (Меркурий, Венера, Земля, Марс, Юпитер, Сатурн, Уран, Нептун)
+                q2: 'Кислород',
+                q3: '1961',
+            };
+
+            // ──────────────────────────────────────
+            // Функция: получение выбранного ответа
+            // ──────────────────────────────────────
+            function getSelectedAnswer(questionName) {
+                const selected = document.querySelector(`input[name="${questionName}"]:checked`);
+                return selected ? selected.value : null;
+            }
+
+            // ──────────────────────────────────────
+            // Функция: подсветка правильных/неправильных ответов
+            // ──────────────────────────────────────
+            function highlightAnswers() {
+                questionCards.forEach(card => {
+                    const qName = `q${card.dataset.question}`;
+                    const correctValue = correctAnswers[qName];
+                    const allOptions = card.querySelectorAll('.option-label');
+
+                    allOptions.forEach(opt => {
+                        const input = opt.querySelector('input');
+                        const isCorrect = input.value === correctValue;
+                        const isChecked = input.checked;
+
+                        // Сбрасываем классы
+                        opt.classList.remove('correct-answer', 'wrong-answer');
+
+                        // Подсвечиваем правильный ответ зелёным
+                        if (isCorrect) {
+                            opt.classList.add('correct-answer');
+                        }
+
+                        // Если выбран неправильный — подсвечиваем красным
+                        if (isChecked && !isCorrect) {
+                            opt.classList.add('wrong-answer');
+                        }
+                    });
+
+                    // Подсветка всей карточки
+                    const selectedValue = getSelectedAnswer(qName);
+                    card.classList.remove('correct-highlight', 'wrong-highlight');
+                    if (selectedValue === correctValue) {
+                        card.classList.add('correct-highlight');
+                    } else if (selectedValue !== null && selectedValue !== correctValue) {
+                        card.classList.add('wrong-highlight');
+                    }
+                });
+            }
+
+            // ──────────────────────────────────────
+            // Функция: получение результата
+            // ──────────────────────────────────────
+            function calculateScore() {
+                let correctCount = 0;
+                const totalQuestions = Object.keys(correctAnswers).length;
+
+                for (const [qName, correctValue] of Object.entries(correctAnswers)) {
+                    const selected = getSelectedAnswer(qName);
+                    if (selected === correctValue) {
+                        correctCount++;
+                    }
+                }
+
+                return { correctCount, totalQuestions };
+            }
+
+            // ──────────────────────────────────────
+            // Функция: отображение результата
+            // ──────────────────────────────────────
+            function showResult(correctCount, totalQuestions) {
+                // Скрываем форму, показываем блок результата
+                quizForm.classList.add('hidden');
+                resultBlock.style.display = 'block';
+
+                // Очищаем и задаём класс для счёта
+                resultScore.classList.remove('perfect', 'good', 'okay', 'poor');
+
+                let emoji, message, detail, scoreClass;
+
+                switch (correctCount) {
+                    case 3:
+                        emoji = '🏆';
+                        message = 'Великолепно! Вы настоящий эрудит!';
+                        detail = 'Все вопросы решены безупречно. Так держать! Ваша скидка - 20% Промокод: AWV123ABC';
+                        scoreClass = 'perfect';
+                        break;
+                    case 2:
+                        emoji = '👍';
+                        message = 'Хороший результат!';
+                        detail = 'Вы ответили верно на 2 из 3 вопросов. Есть к чему стремиться. Ваша скидка - 10% Промокод: ADF113LGB';
+                        scoreClass = 'good';
+                        break;
+                    case 1:
+                        emoji = '🤔';
+                        message = 'Неплохо, но можно лучше.';
+                        detail =
+                            'Всего 1 правильный ответ из 3. Рекомендуем освежить знания. Ваша скидка - 5% Промокод: AFR249GNC';
+                        scoreClass = 'okay';
+                        break;
+                    case 0:
+                        emoji = '😅';
+                        message = 'Увы, ни одного верного ответа.';
+                        detail =
+                            'Не расстраивайтесь! Ошибки — это часть обучения. Утешительный приз - скидка 2% Промокод: DUR945RAK.';
+                        scoreClass = 'poor';
+                        break;
+                    default:
+                        emoji = '❓';
+                        message = 'Что-то пошло не так.';
+                        detail = '';
+                        scoreClass = '';
+                }
+
+                resultEmoji.textContent = emoji;
+                resultScore.textContent = `${correctCount} / ${totalQuestions}`;
+                resultScore.classList.add(scoreClass);
+                resultOutOf.textContent = `правильных ответов из ${totalQuestions}`;
+                resultMessage.textContent = message;
+                resultDetail.textContent = detail;
+
+                // Прокручиваем к результату
+                resultBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // ──────────────────────────────────────
+            // Функция: сброс викторины
+            // ──────────────────────────────────────
+            function resetQuiz() {
+                // Очищаем все выбранные radio
+                const allRadios = quizForm.querySelectorAll('input[type="radio"]');
+                allRadios.forEach(radio => {
+                    radio.checked = false;
+                });
+
+                // Убираем все подсветки
+                questionCards.forEach(card => {
+                    card.classList.remove('correct-highlight', 'wrong-highlight');
+                    const allOptions = card.querySelectorAll('.option-label');
+                    allOptions.forEach(opt => {
+                        opt.classList.remove('correct-answer', 'wrong-answer');
+                    });
+                });
+
+                // Показываем форму, скрываем результат
+                quizForm.classList.remove('hidden');
+                resultBlock.style.display = 'none';
+
+                // Возвращаем кнопку
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = '📝 Проверить ответы';
+
+                // Прокручиваем к началу
+                document.getElementById('quizContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // ──────────────────────────────────────
+            // Обработчик отправки формы
+            // ──────────────────────────────────────
+            quizForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                // Проверяем, все ли вопросы имеют ответ
+                const allQuestionNames = Object.keys(correctAnswers);
+                let allAnswered = true;
+
+                for (const qName of allQuestionNames) {
+                    if (!getSelectedAnswer(qName)) {
+                        allAnswered = false;
+                        // Подсвечиваем карточку без ответа
+                        const qNumber = qName.replace('q', '');
+                        const card = document.querySelector(`.question-card[data-question="${qNumber}"]`);
+                        if (card) {
+                            card.style.borderColor = '#f56565';
+                            card.style.boxShadow = '0 0 0 3px rgba(245,101,101,0.12)';
+                            setTimeout(() => {
+                                card.style.borderColor = '';
+                                card.style.boxShadow = '';
+                            }, 1800);
+                        }
+                    }
+                }
+
+                if (!allAnswered) {
+                    // Показываем предупреждение
+                    const firstUnansweredCard = document.querySelector('.question-card[style*="border-color"]');
+                    if (firstUnansweredCard) {
+                        firstUnansweredCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    // Встряхиваем кнопку
+                    btnSubmit.style.animation = 'shake 0.5s ease';
+                    setTimeout(() => {
+                        btnSubmit.style.animation = '';
+                    }, 500);
+                    return;
+                }
+
+                // Подсвечиваем ответы
+                highlightAnswers();
+
+                // Считаем результат
+                const { correctCount, totalQuestions } = calculateScore();
+
+                // Делаем кнопку неактивной
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = '✅ Результат готов';
+
+                // Небольшая задержка для эффекта
+                setTimeout(() => {
+                    showResult(correctCount, totalQuestions);
+                }, 400);
+            });
+
+            // ──────────────────────────────────────
+            // Обработчик кнопки «Пройти заново»
+            // ──────────────────────────────────────
+            btnRetry.addEventListener('click', function() {
+                resetQuiz();
+            });
+
+            // ──────────────────────────────────────
+            // Анимация встряхивания для кнопки
+            // ──────────────────────────────────────
+            const shakeKeyframes = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                20% { transform: translateX(-6px); }
+                40% { transform: translateX(6px); }
+                60% { transform: translateX(-5px); }
+                80% { transform: translateX(4px); }
+            }`;
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = shakeKeyframes;
+            document.head.appendChild(styleSheet);
+
+            console.log('🧠 Викторина готова! Ответьте на все 3 вопроса и нажмите «Проверить ответы».');
+            console.log('Правильные ответы: 8 планет, Кислород (O), 1961 год.');
+        })();
+    </script>
+</body>
+</html>
