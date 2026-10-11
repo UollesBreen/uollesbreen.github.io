@@ -31,7 +31,7 @@ def get_keyboard():
 @dp.message(CommandStart())
 async def start(message: Message):
     await message.answer(
-        "Здесь вы можете отправить свою идею или пожалание, которое может быть реализовано партией Единый Лицей",
+        "Здесь вы можете отправить свою идею или пожелание, которое может быть реализовано партией Единый Лицей",
         reply_markup=get_keyboard()
     )
 
